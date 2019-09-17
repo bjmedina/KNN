@@ -18,22 +18,49 @@ class_idx = 0 # variable used to keep assign an index to eat class (used later f
 class KNearestNeighbors():
 
     training_set = []
-    K            = K
     
-    def __init__(self, training_set, K):
-        self.training_set = training_set
-        self.K            = K
+    def __init__(self, training_set, K, f, labels):
+        
+        self.training_set = training_set # Training set (list of indices that contain training data in dataset)
+        self.K            = int(K)       # Number of neighbors
+        self.f            = f            # Distance metric
+        self.labels       = labels       # All class labels
 
     def predict(self, test_set):
         '''
         'predict' uses training data to test whether it can make accurate predictions of the test set. This should work on either a single point or an array of points.
         '''
-        predicted = 'Iris-versicolor'
-        actual    = 'Iris-virginica'
-        
+        # Remember votes for each class
+        votes     = {}
+        for label in self.labels:
+            votes[label] = 0
+
+        # Get the actual value of the test example
+        actual    = test_set[4]
+        closets   = np.zeros((self.K,1))
+        distances = []
+
+        # for each index in the list of training examples
+        for example in self.training_set:
+            train_coord = np.array(data.iloc[int(example)][0:4])
+            test_coord  = np.array(test_set[0:4])
+
+            distance = self.f(train_coord, test_coord)
+            distances.append((distance, int(example)))
+
         # 1. Get the K nearest points from the data set.
+        topK = getMaxK(distances, self.K)
+        
         # 2. Figure out which class is voted on the most.
-        # 3. Return that class. 
+        for closest in topK:
+            votes[data.iloc[closest[1]][4]] += 1
+        
+        # 3. Return that class.
+        v = list(votes.values())
+        k = list(votes.keys())
+
+        predicted = k[v.index(max(v))]
+
         return classes[predicted], classes[actual]
 ##########################
 
@@ -71,6 +98,34 @@ def Cosine(a, b):
     scalar: np.Float
     '''   
     return 1 - (np.dot(a,b) / (np.linalg.norm(a) * np.linalg.norm(b)))
+
+def getMaxK(numbers, k):
+    '''
+    Description
+    -----------
+    'getMaxK' returns indices of the first k max elements.
+
+    Input
+    -----
+    'numbers': list. List of tuples, where first element is the distance, and second in the index of the training example.
+               Assumed that the list is unordered.
+    'k'      : int.  number of max values we want.
+
+    Output
+    ------
+    scalar: np.Float
+    '''
+
+    # We want to sort the list by the first element of each tuple (which is the distance from the training example to the test example)
+    # We'll use the function below as the key for sorting.
+    def takeFirst(element):
+        return element[0]
+
+    numbers.sort(key = takeFirst)
+
+    # Return the first k elements
+    return numbers[:k]
+    
 
 def Panic(a, b):
     '''
@@ -112,7 +167,7 @@ def parseArguments(cmdargs):
 ##########################
 
 
-####### Getting data and initializing variables ###
+####### Getting data / initializing variables ###
 data      = pd.read_csv('/Users/bjm/Documents/School/fall2019/CAP5610/assignments/a1/data/iris.data', header=None) # CHANGE ME
 classes = {} # Dictionary will store class name with index
 
@@ -126,13 +181,14 @@ KFolds    = 5 # Specify number of folds for k-fold cross validation
 K         = len(data) # Number of examples of which we are going to split
 confusion = np.zeros((3,3)) # Three classes, so confusion matrix is 3 X 3
 k, m      = parseArguments(cmdargs)
+assert (int(k) > 0), ("%s is not a positive integer. Please enter an integer greater than 0." % (k))
 
-f         = (Euclidean if (m == "Euclidean") else Cosine)
-assert (f == Euclidean or f == Cosine)
+f         = (Euclidean if (m == "Euclidean") else (Cosine if (m == "Cosine") else Panic)) # Getting specified distance metric
+assert (f == Euclidean or f == Cosine) , ("'%s' is not a distance metric. Please enter either 'Euclidean' or 'Cosine'." % (m))
 ########################
 
 ####### K-Nearest Neighbors ##
-
+ 
 # 1. Shuffle indices for the data set
 fold_size  = K / KFolds
 all_splits = np.zeros((KFolds, K))
@@ -144,26 +200,26 @@ for i in range(0, KFolds):
 
 # 3. Repeat KFolds times
 for fold in range(KFolds):
-    #    4. Reserve first subgroup for testing. Train and everything that isn't is in the test set
+    # 4. Reserve first subgroup for testing. Train and everything that isn't is in the test set
     test_set = all_splits[fold][0:(int(fold_size)-1)]
     training = all_splits[fold][int(fold_size):]
 
     assert len(test_set) >= 1
     assert len(training) >= 1
     
-    #    5. Run K nearest neighbors on the training set
-    KNN = KNearestNeighbors(training)
+    # 5. Run K nearest neighbors on the training set
+    KNN = KNearestNeighbors(training, k, f, classes.keys())
 
     for test in test_set:
-        #    6. Test with the test set.
-        predicted, actual = KNN.predict(test)
+        # 6. Test with the test set.
+        predicted, actual = KNN.predict(data.iloc[int(test)])
 
-        #    7. Save the precision, recall and add to confusion matrix
-        #       Compare the results to the actual values (you can get this from the data)
+        # 7. Save the precision, recall and add to confusion matrix
+        #    Compare the results to the actual values (you can get this from the data)
         confusion[predicted][actual] += 1
 
-    
-# 9. Report 
+# 8. Report
+print(confusion)
 
 ##################################
 
