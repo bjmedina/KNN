@@ -12,6 +12,8 @@ import pandas as pd
 # Command line arguments as a list are here
 cmdargs = sys.argv
 
+class_idx = 0 # variable used to keep assign an index to eat class (used later for the confusion matrix
+
 ####### Classes ##########
 class KNearestNeighbors():
 
@@ -26,10 +28,13 @@ class KNearestNeighbors():
         '''
         'predict' uses training data to test whether it can make accurate predictions of the test set. This should work on either a single point or an array of points.
         '''
+        predicted = 'Iris-versicolor'
+        actual    = 'Iris-virginica'
+        
         # 1. Get the K nearest points from the data set.
         # 2. Figure out which class is voted on the most.
         # 3. Return that class. 
-        return []
+        return classes[predicted], classes[actual]
 ##########################
 
 ####### Functions ########
@@ -81,8 +86,9 @@ def Panic(a, b):
     Output
     ------
     String
-    '''   
-    return "Enter either 'Euclidean' or 'Cosine' as a distance metric."
+    '''
+    print("Pick either 'Euclidean' or 'Cosine' as a distance metric.")
+    sys.exit()
 
 def parseArguments(cmdargs):
     '''
@@ -106,13 +112,23 @@ def parseArguments(cmdargs):
 ##########################
 
 
-####### Getting data ###
+####### Getting data and initializing variables ###
 data      = pd.read_csv('/Users/bjm/Documents/School/fall2019/CAP5610/assignments/a1/data/iris.data', header=None) # CHANGE ME
+classes = {} # Dictionary will store class name with index
+
+# Code to get the 
+for cl in data.iloc[:][4]:
+    if not (cl in classes.keys()):
+        classes[cl] = class_idx
+        class_idx = class_idx + 1
+
 KFolds    = 5 # Specify number of folds for k-fold cross validation
 K         = len(data) # Number of examples of which we are going to split
 confusion = np.zeros((3,3)) # Three classes, so confusion matrix is 3 X 3
-k, m      = parseArguments(cmdargs) 
-f         = (Euclidean if (m == "Euclidean") else ( Cosine if (m == "Cosine") else Panic ))
+k, m      = parseArguments(cmdargs)
+
+f         = (Euclidean if (m == "Euclidean") else Cosine)
+assert (f == Euclidean or f == Cosine)
 ########################
 
 ####### K-Nearest Neighbors ##
@@ -137,14 +153,15 @@ for fold in range(KFolds):
     
     #    5. Run K nearest neighbors on the training set
     KNN = KNearestNeighbors(training)
-    
-    #    6. Test with the test set.
-    predictions = KNN.predict(test_set)
-    
-    #    7. Save the precision, recall.
-    #       Compare the results to the actual values (you can get this from the data)
-    
-    #    8. Add to the confusion matrix
+
+    for test in test_set:
+        #    6. Test with the test set.
+        predicted, actual = KNN.predict(test)
+
+        #    7. Save the precision, recall and add to confusion matrix
+        #       Compare the results to the actual values (you can get this from the data)
+        confusion[predicted][actual] += 1
+
     
 # 9. Report 
 
