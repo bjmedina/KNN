@@ -4,6 +4,7 @@
 
 ####### Imports ########
 import sys
+import time
 
 import numpy as np
 import pandas as pd
@@ -48,6 +49,7 @@ class KNearestNeighbors():
             distance = self.f(train_coord, test_coord)
             distances.append((distance, int(example)))
 
+            
         # 1. Get the K nearest points from the data set.
         topK = getMaxK(distances, self.K)
         
@@ -169,7 +171,7 @@ def parseArguments(cmdargs):
 
 ####### Getting data / initializing variables ###
 data      = pd.read_csv('/Users/bjm/Documents/School/fall2019/CAP5610/assignments/a1/data/iris.data', header=None) # CHANGE ME
-classes = {} # Dictionary will store class name with index
+classes   = {} # Dictionary will store class name with index
 
 # Code to get the 
 for cl in data.iloc[:][4]:
@@ -179,7 +181,7 @@ for cl in data.iloc[:][4]:
 
 KFolds    = 5 # Specify number of folds for k-fold cross validation
 K         = len(data) # Number of examples of which we are going to split
-confusion = np.zeros((3,3)) # Three classes, so confusion matrix is 3 X 3
+confusion = np.zeros((class_idx,class_idx)) # Three classes, so confusion matrix is 3 X 3
 k, m      = parseArguments(cmdargs)
 assert (int(k) > 0), ("%s is not a positive integer. Please enter an integer greater than 0." % (k))
 
@@ -197,11 +199,12 @@ all_splits = np.zeros((KFolds, K))
 for i in range(0, KFolds):
     # We'll use the first 'fold_size' group as the test set. Rest is training. 
     all_splits[i] = np.random.permutation(np.arange(K))
-
+    
 # 3. Repeat KFolds times
 for fold in range(KFolds):
+    
     # 4. Reserve first subgroup for testing. Train and everything that isn't is in the test set
-    test_set = all_splits[fold][0:(int(fold_size)-1)]
+    test_set = all_splits[fold][0:int(fold_size)]
     training = all_splits[fold][int(fold_size):]
 
     assert len(test_set) >= 1
@@ -213,13 +216,14 @@ for fold in range(KFolds):
     for test in test_set:
         # 6. Test with the test set.
         predicted, actual = KNN.predict(data.iloc[int(test)])
-
         # 7. Save the precision, recall and add to confusion matrix
         #    Compare the results to the actual values (you can get this from the data)
         confusion[predicted][actual] += 1
 
 # 8. Report
 print(confusion)
+accuracy = (np.sum([confusion[i][i] for i in range(len(confusion))]) / K) * 100
+print("\nAccuracy: %.2f %%" % (accuracy))
 
 ##################################
 
