@@ -3,9 +3,12 @@
 # K Nearest Neighbors w/ Iris Dataset
 
 ####### Imports ########
+from sklearn.metrics import confusion_matrix
+
 import sys
 import time
 
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 ########################
@@ -36,7 +39,7 @@ class KNearestNeighbors():
         for label in self.labels:
             votes[label] = 0
 
-        # Get the actual value of the test example
+        # Get the actual value of the test examplea
         actual    = test_set[4]
         closets   = np.zeros((self.K,1))
         distances = []
@@ -222,8 +225,16 @@ for fold in range(KFolds):
 
 # 8. Report
 print(confusion)
+
 accuracy = (np.sum([confusion[i][i] for i in range(len(confusion))]) / K) * 100
 print("\nAccuracy: %.2f %%" % (accuracy))
+
+plt.matshow(confusion)
+plt.title("Confusion Matrix for %s-NN, %s Distance Metric, %.2f %% Accuracy" % (k, m, accuracy))
+plt.colorbar()
+plt.xlabel("True Label")
+plt.ylabel("Predicted Label")
+plt.show()
 
 ##################################
 
