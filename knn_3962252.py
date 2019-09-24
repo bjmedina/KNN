@@ -3,10 +3,7 @@
 # K Nearest Neighbors w/ Iris Dataset
 
 ####### Imports ########
-from sklearn.metrics import confusion_matrix
-
 import sys
-import time
 
 import numpy as np
 import pandas as pd
@@ -18,16 +15,13 @@ show_matrix = True
 if(show_matrix):
     import matplotlib.pyplot as plt
 
-# Command line arguments as a list are here
-cmdargs = sys.argv
-
-class_idx = 0 # variable used to keep assign an index to eat class (used later for the confusion matrix
-
-####### Classes ##########
 class KNearestNeighbors():
-
-    training_set = []
-    
+    '''
+    Description
+    -----------
+    Class that can handle data and run the naive bayes classifier on the iris dataset. 
+    '''
+        
     def __init__(self, training_set, K, f, labels):
         
         self.training_set = training_set # Training set (list of indices that contain training data in dataset)
@@ -35,9 +29,19 @@ class KNearestNeighbors():
         self.f            = f            # Distance metric
         self.labels       = labels       # All class labels
 
-    def predict(self, test_set):
+    def predict(self, test_ex):
         '''
+        Description
+        -----------
         'predict' uses training data to test whether it can make accurate predictions of the test set. This should work on either a single point or an array of points.
+
+        Input
+        -----
+        'test_ex': list with 4 features, and label
+        
+        Output
+        ------
+        tuple of class prediction and actual class, both integers.
         '''
         # Remember votes for each class
         votes     = {}
@@ -45,15 +49,17 @@ class KNearestNeighbors():
             votes[label] = 0
 
         # Get the actual value of the test examplea
-        actual    = test_set[4]
+        actual    = test_ex[4]
         closets   = np.zeros((self.K,1))
         distances = []
 
-        # for each index in the list of training examples
+        # for each index in the list of training examples...
         for example in self.training_set:
             train_coord = np.array(data.iloc[int(example)][0:4])
-            test_coord  = np.array(test_set[0:4])
+            test_coord  = np.array(test_ex[0:4])
 
+            # calculate the distance between the current training example and the test example
+            # using the distance metric specified by the user
             distance = self.f(train_coord, test_coord)
             distances.append((distance, int(example)))
 
@@ -72,7 +78,6 @@ class KNearestNeighbors():
         predicted = k[v.index(max(v))]
 
         return classes[predicted], classes[actual]
-##########################
 
 ####### Functions ########
 def Euclidean(a, b):
@@ -135,7 +140,6 @@ def getMaxK(numbers, k):
 
     # Return the first k elements
     return numbers[:k]
-    
 
 def Panic(a, b):
     '''
@@ -145,8 +149,7 @@ def Panic(a, b):
 
     Input
     -----
-    'a': np.array. float array
-    'b': np.array. float array
+    Doesn't matter, as long as there are two inputs.
 
     Output
     ------
@@ -173,15 +176,23 @@ def parseArguments(cmdargs):
     k = cmdargs[cmdargs.index('-k')+1]
     m = cmdargs[cmdargs.index('-m')+1]
     return k, m
-
 ##########################
 
 
 ####### Getting data / initializing variables ###
-data      = pd.read_csv('/home/bjm/Documents/School/fall2019/CAP5610/assignments/a1/data/iris.data', header=None) # CHANGE ME
-classes   = {} # Dictionary will store class name with index
+# Command line arguments as a list are here
+cmdargs   = sys.argv
 
-# Code to get the 
+# Change Me!
+data      = pd.read_csv('/home/bjm/Documents/School/fall2019/CAP5610/assignments/a1/data/iris.data', header=None)
+
+# Dictionary will store class name with index
+classes   = {} 
+
+# variable used to keep assign an index to eat class (used later for the confusion matrix
+class_idx = 0 
+
+# Code to get the index for each class
 for cl in data.iloc[:][4]:
     if not (cl in classes.keys()):
         classes[cl] = class_idx
@@ -189,7 +200,8 @@ for cl in data.iloc[:][4]:
 
 KFolds    = 5 # Specify number of folds for k-fold cross validation
 K         = len(data) # Number of examples of which we are going to split
-confusion = np.zeros((class_idx,class_idx)) # Three classes, so confusion matrix is 3 X 3
+confusion = np.zeros((class_idx,class_idx)) # Three classes in this case, so confusion matrix is 3 X 3
+
 k, m      = parseArguments(cmdargs)
 assert (int(k) > 0), ("%s is not a positive integer. Please enter an integer greater than 0." % (k))
 
@@ -197,8 +209,9 @@ f         = (Euclidean if (m == "Euclidean") else (Cosine if (m == "Cosine") els
 assert (f == Euclidean or f == Cosine) , ("'%s' is not a distance metric. Please enter either 'Euclidean' or 'Cosine'." % (m))
 ########################
 
+
 ####### K-Nearest Neighbors ##
- 
+
 # 1. Shuffle indices for the data set
 fold_size  = K / KFolds
 all_splits = np.zeros((KFolds, K))
