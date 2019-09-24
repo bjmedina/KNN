@@ -8,10 +8,15 @@ from sklearn.metrics import confusion_matrix
 import sys
 import time
 
-import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 ########################
+
+# This plots the confusion matrix at the end of the program
+show_matrix = True
+
+if(show_matrix):
+    import matplotlib.pyplot as plt
 
 # Command line arguments as a list are here
 cmdargs = sys.argv
@@ -173,7 +178,7 @@ def parseArguments(cmdargs):
 
 
 ####### Getting data / initializing variables ###
-data      = pd.read_csv('/Users/bjm/Documents/School/fall2019/CAP5610/assignments/a1/data/iris.data', header=None) # CHANGE ME
+data      = pd.read_csv('/home/bjm/Documents/School/fall2019/CAP5610/assignments/a1/data/iris.data', header=None) # CHANGE ME
 classes   = {} # Dictionary will store class name with index
 
 # Code to get the 
@@ -219,22 +224,24 @@ for fold in range(KFolds):
     for test in test_set:
         # 6. Test with the test set.
         predicted, actual = KNN.predict(data.iloc[int(test)])
+        
         # 7. Save the precision, recall and add to confusion matrix
         #    Compare the results to the actual values (you can get this from the data)
         confusion[predicted][actual] += 1
 
 # 8. Report
-print(confusion)
-
 accuracy = (np.sum([confusion[i][i] for i in range(len(confusion))]) / K) * 100
-print("\nAccuracy: %.2f %%" % (accuracy))
 
-plt.matshow(confusion)
-plt.title("Confusion Matrix for %s-NN, %s Distance Metric, %.2f %% Accuracy" % (k, m, accuracy))
-plt.colorbar()
-plt.xlabel("True Label")
-plt.ylabel("Predicted Label")
-plt.show()
-
+if(show_matrix):
+    plt.matshow(confusion)
+    plt.title("Confusion Matrix for %s-NN, %s Distance Metric, %.2f %% Accuracy" % (k, m, accuracy))
+    plt.colorbar()
+    plt.xlabel("True Label")
+    plt.ylabel("Predicted Label")
+    plt.show()
+else:
+    print("Confusion Matrix:")
+    print(confusion)
+    print("\nAccuracy: %.2f %%" % (accuracy))
 ##################################
 
